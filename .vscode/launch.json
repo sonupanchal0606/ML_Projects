@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/1.1 house-price-prediction/.venv/bin/python"
+        },
+        {
+            "name": "Debug House Price API",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "app.api:app",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                "8000"
+            ],
+            "cwd": "${workspaceFolder}/1.1 house-price-prediction",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "subProcess": true,
+            "python": "${workspaceFolder}/1.1 house-price-prediction/.venv/bin/python"
+        }
+    ]
+}

@@ -1,0 +1,310 @@
+<!doctype html>
+<html>
+  <head>
+    <title>House Price Prediction</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        padding: 40px;
+      }
+
+      .container {
+        max-width: 760px;
+        margin: auto;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+      }
+
+      h2 {
+        text-align: center;
+      }
+
+      label {
+        font-weight: bold;
+        margin-top: 12px;
+        display: block;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 6px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 20px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #1d4ed8;
+      }
+
+      .result {
+        margin-top: 20px;
+        padding: 15px;
+        background: #ecfdf5;
+        border: 1px solid #10b981;
+        border-radius: 8px;
+        font-size: 18px;
+        text-align: center;
+        display: none;
+      }
+
+      .chart-panel {
+        margin-top: 24px;
+        display: none;
+      }
+
+      .chart-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .chart-wrap {
+        width: 100%;
+        height: 420px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+      }
+
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .legend {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+        font-size: 14px;
+        color: #374151;
+      }
+
+      .legend-item {
+        align-items: center;
+        display: inline-flex;
+        gap: 6px;
+      }
+
+      .legend-color {
+        border-radius: 50%;
+        display: inline-block;
+        height: 10px;
+        width: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h2>House Price Prediction</h2>
+
+      <label>Median Income</label>
+      <input id="median_income" type="number" step="0.01" value="8.32" />
+
+      <label>Housing Median Age</label>
+      <input id="housing_median_age" type="number" value="41" />
+
+      <label>Total Rooms</label>
+      <input id="total_rooms" type="number" value="880" />
+
+      <label>Population</label>
+      <input id="population" type="number" value="322" />
+
+      <label>Households</label>
+      <input id="households" type="number" value="126" />
+
+      <button onclick="predictPrice()">Predict Price</button>
+
+      <div id="result" class="result"></div>
+
+      <div id="chartPanel" class="chart-panel">
+        <div class="chart-title">Housing Data vs Regression Line</div>
+        <div class="chart-wrap">
+          <canvas id="priceChart"></canvas>
+        </div>
+        <div class="legend">
+          <span class="legend-item">
+            <span class="legend-color" style="background: #2563eb"></span>
+            Housing data
+          </span>
+          <span class="legend-item">
+            <span class="legend-color" style="background: #16a34a"></span>
+            Regression line
+          </span>
+          <span class="legend-item">
+            <span class="legend-color" style="background: #dc2626"></span>
+            Testing point
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      async function predictPrice() {
+        const data = {
+          median_income: parseFloat(
+            document.getElementById("median_income").value,
+          ),
+          housing_median_age: parseFloat(
+            document.getElementById("housing_median_age").value,
+          ),
+          total_rooms: parseFloat(document.getElementById("total_rooms").value),
+          population: parseFloat(document.getElementById("population").value),
+          households: parseFloat(document.getElementById("households").value),
+        };
+
+        const response = await fetch("/predict", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+
+        const resultDiv = document.getElementById("result");
+        resultDiv.style.display = "block";
+        resultDiv.innerHTML =
+          "Predicted Price: $" + result.predicted_price.toLocaleString();
+
+        const plotResponse = await fetch("/plot-data", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+        const plotData = await plotResponse.json();
+        drawChart(plotData);
+      }
+
+      function drawChart(plotData) {
+        const chartPanel = document.getElementById("chartPanel");
+        const canvas = document.getElementById("priceChart");
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const scale = window.devicePixelRatio || 1;
+
+        canvas.width = rect.width * scale;
+        canvas.height = rect.height * scale;
+
+        const ctx = canvas.getContext("2d");
+        ctx.scale(scale, scale);
+        ctx.clearRect(0, 0, rect.width, rect.height);
+
+        chartPanel.style.display = "block";
+
+        const padding = {
+          top: 24,
+          right: 24,
+          bottom: 54,
+          left: 72,
+        };
+        const width = rect.width;
+        const height = rect.height;
+        const plotWidth = width - padding.left - padding.right;
+        const plotHeight = height - padding.top - padding.bottom;
+        const allPoints = [
+          ...plotData.points,
+          ...plotData.line,
+          plotData.test_point,
+        ];
+        const xValues = allPoints.map((point) => point.x);
+        const yValues = allPoints.map((point) => point.y);
+        const xMin = Math.min(...xValues);
+        const xMax = Math.max(...xValues);
+        const yMin = Math.min(...yValues) * 0.92;
+        const yMax = Math.max(...yValues) * 1.04;
+
+        function xScale(value) {
+          return (
+            padding.left + ((value - xMin) / (xMax - xMin)) * plotWidth
+          );
+        }
+
+        function yScale(value) {
+          return (
+            padding.top +
+            plotHeight -
+            ((value - yMin) / (yMax - yMin)) * plotHeight
+          );
+        }
+
+        ctx.strokeStyle = "#d1d5db";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, padding.top);
+        ctx.lineTo(padding.left, padding.top + plotHeight);
+        ctx.lineTo(padding.left + plotWidth, padding.top + plotHeight);
+        ctx.stroke();
+
+        ctx.fillStyle = "#374151";
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          "Median Income",
+          padding.left + plotWidth / 2,
+          height - 14,
+        );
+
+        ctx.save();
+        ctx.translate(18, padding.top + plotHeight / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText("Median House Value", 0, 0);
+        ctx.restore();
+
+        ctx.textAlign = "right";
+        ctx.fillText("$" + Math.round(yMin).toLocaleString(), padding.left - 8, yScale(yMin));
+        ctx.fillText("$" + Math.round(yMax).toLocaleString(), padding.left - 8, yScale(yMax));
+
+        ctx.textAlign = "center";
+        ctx.fillText(xMin.toFixed(1), xScale(xMin), padding.top + plotHeight + 20);
+        ctx.fillText(xMax.toFixed(1), xScale(xMax), padding.top + plotHeight + 20);
+
+        ctx.fillStyle = "rgba(37, 99, 235, 0.38)";
+        plotData.points.forEach((point) => {
+          ctx.beginPath();
+          ctx.arc(xScale(point.x), yScale(point.y), 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        ctx.strokeStyle = "#16a34a";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(xScale(plotData.line[0].x), yScale(plotData.line[0].y));
+        ctx.lineTo(xScale(plotData.line[1].x), yScale(plotData.line[1].y));
+        ctx.stroke();
+
+        ctx.fillStyle = "#dc2626";
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(
+          xScale(plotData.test_point.x),
+          yScale(plotData.test_point.y),
+          7,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+        ctx.stroke();
+      }
+    </script>
+  </body>
+</html>
