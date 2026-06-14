@@ -198,17 +198,19 @@
       function drawChart(plotData) {
         const chartPanel = document.getElementById("chartPanel");
         const canvas = document.getElementById("priceChart");
+        chartPanel.style.display = "block";
+
         const rect = canvas.parentElement.getBoundingClientRect();
         const scale = window.devicePixelRatio || 1;
+        const chartWidth = rect.width || 700;
+        const chartHeight = rect.height || 420;
 
-        canvas.width = rect.width * scale;
-        canvas.height = rect.height * scale;
+        canvas.width = chartWidth * scale;
+        canvas.height = chartHeight * scale;
 
         const ctx = canvas.getContext("2d");
         ctx.scale(scale, scale);
-        ctx.clearRect(0, 0, rect.width, rect.height);
-
-        chartPanel.style.display = "block";
+        ctx.clearRect(0, 0, chartWidth, chartHeight);
 
         const padding = {
           top: 24,
@@ -216,8 +218,8 @@
           bottom: 54,
           left: 72,
         };
-        const width = rect.width;
-        const height = rect.height;
+        const width = chartWidth;
+        const height = chartHeight;
         const plotWidth = width - padding.left - padding.right;
         const plotHeight = height - padding.top - padding.bottom;
         const allPoints = [

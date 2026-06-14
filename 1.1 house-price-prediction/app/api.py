@@ -30,18 +30,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Main prediction model saved by train.py.
+# This model uses all columns in FEATURE_COLUMNS to predict the house price.
 model = joblib.load(MODEL_PATH)
+
 housing_df = pd.read_csv(DATA_PATH)
+
+# Data used only for the 2D graph.
+# The graph shows median_income on the x-axis and median_house_value on the y-axis.
 plot_df = housing_df[["median_income", "median_house_value"]].dropna()
 
+# Separate simple model used only to draw the green regression line on the graph.
+# This does not control the real prediction result returned by /predict.
 plot_model = LinearRegression()
 plot_model.fit(plot_df[["median_income"]], plot_df["median_house_value"])
 
+# Keep the graph lightweight by plotting up to 500 sample rows instead of every row.
 plot_sample = plot_df.sample(
     n=min(500, len(plot_df)),
     random_state=42,
 ).sort_values("median_income")
 
+# Build two points for the green regression line: one at the lowest income
+# and one at the highest income in the dataset.
 min_income = float(plot_df["median_income"].min())
 max_income = float(plot_df["median_income"].max())
 line_inputs = pd.DataFrame(
@@ -80,6 +91,8 @@ def predict(data: HouseData):
 @app.post("/plot-data")
 def plot_data(data: HouseData):
     input_data = build_input_dataframe(data)
+
+    # The red testing point uses the main model prediction, not plot_model.
     prediction = model.predict(input_data)
 
     return {
@@ -107,6 +120,4 @@ def plot_data(data: HouseData):
     }
 
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
-#bvnbvnbvnbvnbvnbvnbvnb
-#jhgtjytjytu
 
