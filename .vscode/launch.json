@@ -5,15 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File",
+            "name": "Python Debugger: Current File (1.2 venv)",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "python": "${workspaceFolder}/1.1 house-price-prediction/.venv/bin/python"
+            "python": "${workspaceFolder}/1.2 house-price-prediction/.venv/bin/python"
         },
         {
-            "name": "Debug House Price API",
+            "name": "Debug House Price API (1.2)",
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
@@ -22,7 +22,26 @@
                 "--host",
                 "127.0.0.1",
                 "--port",
-                "8000"
+                "8000",
+                "--reload"
+            ],
+            "cwd": "${workspaceFolder}/1.2 house-price-prediction",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "subProcess": true,
+            "python": "${workspaceFolder}/1.2 house-price-prediction/.venv/bin/python"
+        },
+        {
+            "name": "Debug House Price API (1.1)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "app.api:app",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                "8001"
             ],
             "cwd": "${workspaceFolder}/1.1 house-price-prediction",
             "console": "integratedTerminal",

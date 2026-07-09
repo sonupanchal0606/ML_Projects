@@ -1,0 +1,6 @@
+{
+    "model": "RandomForestRegressor",
+    "mae": 32813.52,
+    "rmse": 50589.09,
+    "r2_score": 0.8129
+}
